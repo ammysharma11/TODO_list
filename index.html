@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TODO app</title>
+  <link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+  <h2>TODO App</h2>
+
+  <label for="title1">Todo title:</label><br>
+  <input type="text" id="title1" /><br><br>
+
+  <label for="description">Todo description:</label><br>
+  <input type="text" id="description" /><br><br>
+
+  <button onclick="onPress()">Add Todo</button>
+
+  <hr>
+
+  <div id="mainArea"></div>
+
+  <script>
+    function deleteTodo(id) {
+      fetch("http://localhost:3000/todos/" + id, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }).then(deleteDone);
+    }
+
+    function deleteDone() {
+      console.log("Todo deleted");
+      getData(); // Refresh the list
+    }
+
+    function todosCallback(data) {
+      const parentElement = document.getElementById("mainArea");
+      parentElement.innerHTML = ""; // Clear the current list
+
+      data.forEach(todo => {
+        const childElement = document.createElement("div");
+
+        const titleSpan = document.createElement("span");
+        titleSpan.innerText = todo.title + " ";
+
+        const descSpan = document.createElement("span");
+        descSpan.innerText = todo.description + " ";
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.innerText = "Delete";
+        deleteBtn.onclick = () => deleteTodo(todo.id);
+
+        childElement.appendChild(titleSpan);
+        childElement.appendChild(descSpan);
+        childElement.appendChild(deleteBtn);
+
+        parentElement.appendChild(childElement);
+      });
+    }
+
+    function getData() {
+      fetch("http://localhost:3000/todos")
+        .then(response => response.json())
+        .then(todosCallback);
+    }
+
+    function onPress() {
+      const title = document.getElementById("title1").value;
+      const description = document.getElementById("description").value;
+
+      fetch("http://localhost:3000/todos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ title, description })
+      })
+        .then(response => response.json())
+        .then(() => {
+          // Clear inputs
+          document.getElementById("title1").value = "";
+          document.getElementById("description").value = "";
+          getData(); // Refresh list
+        });
+    }
+
+    // Load todos on page load
+    window.onload = getData;
+  </script>
+</body>
+</html>
